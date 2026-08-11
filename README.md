@@ -83,68 +83,7 @@ This package is organized as a Swift Package Manager workspace with layered modu
 
 ### Component Dependency Graph
 
-The following graph is derived from `Package.swift` target dependencies:
-
-```mermaid
-graph TD
-    CoreMI --> CorePersistence
-    CoreMI --> Merge
-    CoreMI --> Swallow
-
-    LargeLanguageModels --> CoreMI
-    LargeLanguageModels --> CorePersistence
-    LargeLanguageModels --> Merge
-    LargeLanguageModels --> NetworkKit
-    LargeLanguageModels --> Swallow
-    LargeLanguageModels --> SwiftUIX
-
-    Anthropic --> LargeLanguageModels
-    OpenAI --> LargeLanguageModels
-    HuggingFace --> CoreMI
-
-    Cohere --> CoreMI
-    Cohere --> LargeLanguageModels
-    ElevenLabs --> CoreMI
-    ElevenLabs --> LargeLanguageModels
-    Groq --> CoreMI
-    Groq --> LargeLanguageModels
-    HumeAI --> CoreMI
-    HumeAI --> LargeLanguageModels
-    Jina --> CoreMI
-    Jina --> LargeLanguageModels
-    Mistral --> CoreMI
-    Mistral --> LargeLanguageModels
-    NeetsAI --> CoreMI
-    NeetsAI --> LargeLanguageModels
-    Ollama --> CoreMI
-    Ollama --> LargeLanguageModels
-    PlayHT --> CoreMI
-    PlayHT --> LargeLanguageModels
-    Rime --> CoreMI
-    Rime --> LargeLanguageModels
-    TogetherAI --> CoreMI
-    TogetherAI --> LargeLanguageModels
-    VoyageAI --> CoreMI
-    VoyageAI --> LargeLanguageModels
-    _Gemini --> CoreMI
-    _Gemini --> LargeLanguageModels
-
-    Perplexity --> OpenAI
-    Perplexity --> CoreMI
-    Perplexity --> LargeLanguageModels
-
-    AI --> CoreMI
-    AI --> LargeLanguageModels
-    AI --> Anthropic
-    AI --> Cohere
-    AI --> ElevenLabs
-    AI --> Groq
-    AI --> HuggingFace
-    AI --> Jina
-    AI --> Mistral
-    AI --> Ollama
-    AI --> OpenAI
-```
+A full dependency graph generated from `Package.swift` target dependencies is available in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#component-dependency-graph).
 
 ## Dependencies
 
