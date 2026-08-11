@@ -74,6 +74,15 @@ graph TD
     AI --> Mistral
     AI --> Ollama
     AI --> OpenAI
+
+    AI -. standalone product .-> HumeAI
+    AI -. standalone product .-> NeetsAI
+    AI -. standalone product .-> Perplexity
+    AI -. standalone product .-> PlayHT
+    AI -. standalone product .-> Rime
+    AI -. standalone product .-> TogetherAI
+    AI -. standalone product .-> VoyageAI
+    AI -. standalone product .-> _Gemini
 ```
 > Note: The `AI` umbrella target currently depends on `CoreMI`, `LargeLanguageModels`, `Anthropic`, `Cohere`, `ElevenLabs`, `Groq`, `HuggingFace`, `Jina`, `Mistral`, `Ollama`, and `OpenAI`. Other provider modules in this repository are distributed as standalone products and are not re-exported by `AI` in `Package.swift`.
 
