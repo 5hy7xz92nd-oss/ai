@@ -42,27 +42,58 @@
 
 The definitive, open-source Swift framework for interfacing with generative AI.
 
-[Installation](#installation)\
-[Usage](#usage) 
+## Documentation
 
-* [Import the framework](#import-the-framework)
-* [Initialize an AI Client](#initialize-an-ai-client)
-* [LLM Clients Abstraction](#llm-clients-abstraction)
-* [Supported Models](#supported-models)
-* [Completions](#completions)
-  * [Basic Completions](#basic-completions)
-  * [Vision: Image-to-Text](#vision-image-to-text)
-  * [Function Calling](#function-calling)
-* [DALLE-3 Image Generation](#dalle-3-image-generation)
-* [Audio](#audio)
-  * [Audio Transcription: Whisper](#audio-transcription-whisper)
-  * [Audio Generation: OpenAI](#audio-generation-openai)
-  * [Audio Generation: ElevenLabs](#audio-generation-elevenlabs)
-* [Text Embeddings](#text-embeddings) 
+- [Architecture](docs/ARCHITECTURE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
 
-[Roadmap](#roadmap) \
-[Acknowledgements](#acknowledgements) \
-[License](#license)
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Import the framework](#import-the-framework)
+  - [Initialize an AI Client](#initialize-an-ai-client)
+  - [LLM Clients Abstraction](#llm-clients-abstraction)
+  - [Supported Models](#supported-models)
+  - [Completions](#completions)
+    - [Basic Completions](#basic-completions)
+    - [Vision: Image-to-Text](#vision-image-to-text)
+    - [Function Calling](#function-calling)
+  - [DALLE-3 Image Generation](#dalle-3-image-generation)
+  - [Audio](#audio)
+    - [Audio Transcription: Whisper](#audio-transcription-whisper)
+    - [Audio Generation: OpenAI](#audio-generation-openai)
+    - [Audio Generation: ElevenLabs](#audio-generation-elevenlabs)
+  - [Text Embeddings](#text-embeddings)
+- [Roadmap](#roadmap)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+
+## Architecture Overview
+
+This package is organized as a Swift Package Manager workspace with layered modules:
+
+- `CoreMI` provides shared core abstractions used across providers.
+- `LargeLanguageModels` builds common LLM request/response functionality on top of `CoreMI`.
+- Provider modules (`OpenAI`, `Anthropic`, `Mistral`, `Groq`, `ElevenLabs`, etc.) implement vendor-specific APIs.
+- `AI` is the umbrella product that re-exports the main modules for one-stop integration.
+
+### Component Dependency Graph
+
+A full dependency graph generated from `Package.swift` target dependencies is available in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#component-dependency-graph).
+
+## Dependencies
+
+External package dependencies declared in `Package.swift`:
+
+- [`CorePersistence`](https://github.com/vmanot/CorePersistence)
+- [`Merge`](https://github.com/vmanot/Merge)
+- [`NetworkKit`](https://github.com/vmanot/NetworkKit)
+- [`Swallow`](https://github.com/vmanot/Swallow)
+- [`SwiftUIX`](https://github.com/SwiftUIX/SwiftUIX)
 
 # Installation
 
