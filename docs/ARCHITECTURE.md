@@ -33,6 +33,7 @@ graph TD
     Anthropic --> LargeLanguageModels
     OpenAI --> LargeLanguageModels
     HuggingFace --> CoreMI
+    HuggingFace --> Swallow
 
     Cohere --> CoreMI
     Cohere --> LargeLanguageModels
