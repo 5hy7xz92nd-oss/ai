@@ -50,7 +50,7 @@ The definitive, open-source Swift framework for interfacing with generative AI.
 
 ## Table of Contents
 
-- [Architecture](#architecture)
+- [Architecture Overview](#architecture-overview)
 - [Dependencies](#dependencies)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -72,7 +72,7 @@ The definitive, open-source Swift framework for interfacing with generative AI.
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
 
-## Architecture
+## Architecture Overview
 
 This package is organized as a Swift Package Manager workspace with layered modules:
 
