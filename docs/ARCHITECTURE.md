@@ -75,6 +75,7 @@ graph TD
     AI --> Ollama
     AI --> OpenAI
 ```
+> Note: The `AI` umbrella target currently depends on `CoreMI`, `LargeLanguageModels`, `Anthropic`, `Cohere`, `ElevenLabs`, `Groq`, `HuggingFace`, `Jina`, `Mistral`, `Ollama`, and `OpenAI`. Other provider modules in this repository are distributed as standalone products and are not re-exported by `AI` in `Package.swift`.
 
 ## External Dependencies
 
