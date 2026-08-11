@@ -46,13 +46,16 @@ Sources/
   CoreMI/                 # Core request, model ID, service, ASR/TTS foundations
   LargeLanguageModels/    # AbstractLLM, prompts, embeddings protocols
   OpenAI/, Anthropic/, …  # Provider clients
-  AI/                     # Umbrella re-exports
-Tests/                    # Parallel test targets per area
-docs/                     # Architecture and long-form docs
+  AI/                     # Umbrella module (selective @_exported imports)
+Tests/                    # Parallel test targets per area (some providers still missing)
+docs/                     # Architecture and long-form docs (start at docs/README.md)
 Package.swift             # Products, targets, external dependencies
+.github/PULL_REQUEST_TEMPLATE.md
 ```
 
-Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the dependency graph and layering rules before large changes.
+Read [docs/README.md](docs/README.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the dependency graph, product vs module distinction, and layering rules before large changes.
+
+**Important:** The `AI` **product** links many provider targets; the `AI` **module** only re-exports CoreMI, LargeLanguageModels, and OpenAI. See architecture docs before changing `Sources/AI/module.swift`.
 
 ## How to contribute
 
@@ -92,9 +95,9 @@ Typical pattern for a new remote API client:
 4. **Client** — `<Provider>.Client` holding credentials and performing requests.
 5. **Protocol conformance** — e.g. `LLMRequestHandling` or `TextEmbeddingsRequestHandling` in an extension file.
 6. **Models** — Strongly typed model identifiers conforming to `ModelIdentifierConvertible` where applicable.
-7. **Umbrella** — Only add to the `AI` product/target if the provider should ship with the default umbrella import.
-8. **Tests** — `Tests/<Provider>/` test target depending on `AI` or the standalone product.
-9. **Docs** — Architecture table, README usage/roadmap, and CHANGELOG.
+7. **Product vs re-export** — Add a `.library` product if clients should link the provider alone. Add the target to the `AI` product’s `targets` array only if it should ship with the multi-provider product. Add `@_exported import` in `Sources/AI/module.swift` only if `import AI` should surface that module’s API (today only OpenAI among providers).
+8. **Tests** — Add both `Tests/<Provider>/` **and** a `.testTarget` in `Package.swift` (a folder alone is not enough; `TogetherAI` currently has a tests directory without a registered test target).
+9. **Docs** — Architecture tables/graph, README products/roadmap, `docs/README.md` if needed, and CHANGELOG.
 
 Prefer implementing shared protocols over one-off APIs so apps can swap providers.
 
@@ -117,12 +120,13 @@ Prefer implementing shared protocols over one-off APIs so apps can swap provider
 | Doc | Purpose |
 |-----|---------|
 | [README.md](README.md) | Install, usage examples, links |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, products, dependency graph |
+| [docs/README.md](docs/README.md) | Doc index |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, products, dependency graph, protocol matrix |
 | [CHANGELOG.md](CHANGELOG.md) | User-visible changes |
 | [LICENSE](LICENSE) | MIT |
+| [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) | PR checklist |
 
 When editing architecture docs, regenerate or manually update the Mermaid graph so it stays consistent with `Package.swift`.
-
 ## CI
 
 Pushes and PRs to `main` run the **Build** workflow (Preternatural build action on macOS runners). Fix build failures before merge.

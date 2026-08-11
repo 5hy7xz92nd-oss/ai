@@ -1,42 +1,43 @@
 > [!IMPORTANT]
 > This package is presently in its alpha stage of development (2026-03-04).
 
----
-
-</div>
-
 #### Supported Platforms
+
+SPM platforms from [`Package.swift`](Package.swift): **iOS 16+**, **macOS 13+**, **tvOS 16+**, **visionOS 1+**, **watchOS 9+**.
+
 <p align="left">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/macos.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/macos-active.svg">
-  <img alt="macos" src="Images/macos-active.svg" height="24">
+  <img alt="macOS" src="Images/macos-active.svg" height="24">
 </picture>&nbsp;
   
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/ios.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/ios-active.svg">
-  <img alt="macos" src="Images/ios-active.svg" height="24">
+  <img alt="iOS" src="Images/ios-active.svg" height="24">
 </picture>&nbsp;
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/ipados.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/ipados-active.svg">
-  <img alt="macos" src="Images/ipados-active.svg" height="24">
+  <img alt="iPadOS" src="Images/ipados-active.svg" height="24">
 </picture>&nbsp;
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/tvos.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/tvos-active.svg">
-  <img alt="macos" src="Images/tvos-active.svg" height="24">
+  <img alt="tvOS" src="Images/tvos-active.svg" height="24">
 </picture>&nbsp;
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/watchos.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/watchos-active.svg">
-  <img alt="macos" src="Images/watchos-active.svg" height="24">
+  <img alt="watchOS" src="Images/watchos-active.svg" height="24">
 </picture>
 </p>
+
+Also targets **visionOS** (badge art not yet in `Images/`).
 
 # AI
 
@@ -74,7 +75,8 @@ The definitive, open-source Swift framework for interfacing with generative AI.
 
 | Resource | Description |
 |----------|-------------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, products, and full dependency graph |
+| [docs/README.md](docs/README.md) | Documentation index |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, products, protocol matrix, full dependency graph |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, PR process, adding providers |
 | [CHANGELOG.md](CHANGELOG.md) | Notable changes by release |
 | [LICENSE](LICENSE) | MIT |
@@ -105,11 +107,14 @@ The package is organized in layers. Provider SDKs implement shared protocols (`L
 
 | Layer | Modules | Responsibility |
 |-------|---------|----------------|
-| Umbrella | `AI` | Re-exports core + commonly used providers (`import AI`) |
+| Umbrella module | `AI` | `@_exported` re-exports **CoreMI**, **LargeLanguageModels**, **OpenAI** (and Swallow macros client). Other bundled modules still need their own `import`. |
+| Umbrella product | `AI` library | SPM product that **links** core + Anthropic, Cohere, ElevenLabs, Groq, HuggingFace, Jina, Mistral, Ollama, OpenAI, and the `AI` module |
 | Providers | `OpenAI`, `Anthropic`, `Mistral`, `Groq`, `Ollama`, `Perplexity`, `Cohere`, `Jina`, `VoyageAI`, `TogetherAI`, `ElevenLabs`, `PlayHT`, `Rime`, `HumeAI`, `NeetsAI`, `_Gemini`, `HuggingFace`, … | API clients and model types |
 | LLM abstractions | `LargeLanguageModels` | `AbstractLLM`, `PromptLiteral`, chat/function-calling, embeddings protocols |
 | Foundations | `CoreMI` | Request handling, model identifiers, service credentials, ASR/TTS bases |
 | External | Swallow, Merge, NetworkKit, CorePersistence, SwiftUIX | Shared infrastructure (see [Dependencies](#dependencies)) |
+
+`import AI` is enough for OpenAI + shared LLM types. For other clients linked by the product, add e.g. `import Anthropic` or `import Groq`. Providers shipped only as standalone products (`Perplexity`, `_Gemini`, `VoyageAI`, …) require linking that product.
 
 ### Component dependency graph
 
@@ -200,9 +205,30 @@ flowchart TB
 **Notes**
 
 - Most providers also depend on `CoreMI`, `CorePersistence`, `Merge`, `NetworkKit`, and `Swallow` directly (edges omitted above for readability where they already flow through `LargeLanguageModels`).
+- **OpenAI** and **Anthropic** depend on `LargeLanguageModels` + networking stack, not on `CoreMI` directly in `Package.swift`.
 - **Perplexity** is the only provider that depends on another provider target (`OpenAI`).
 - **HuggingFace** depends on `CoreMI` + `Swallow` only (hub/tokenizer helpers, not the full LLM stack).
-- The `AI` umbrella product does **not** include every target (for example `_Gemini`, `Perplexity`, and several voice/embeddings products are separate libraries).
+- The `AI` **product** does **not** link every target (for example `_Gemini`, `Perplexity`, `PlayHT`, `Rime`, `TogetherAI`, `VoyageAI`, `HumeAI`, `NeetsAI` are separate products).
+- The `AI` **module** re-exports only CoreMI, LargeLanguageModels, and OpenAI among first-party modules (`Sources/AI/module.swift`).
+
+### Protocol capabilities (from source)
+
+Which shared protocols have an explicit client conformance today:
+
+| Target | `LLMRequestHandling` | `TextEmbeddingsRequestHandling` | Notes |
+|--------|:--------------------:|:-------------------------------:|-------|
+| OpenAI | yes | yes | Also images, Whisper, speech, assistants |
+| Anthropic | yes | | |
+| Mistral | yes | yes | |
+| Groq | yes | | |
+| Ollama | yes | | |
+| Perplexity | yes | | Depends on OpenAI target |
+| Cohere | | yes | |
+| Jina | | yes | |
+| VoyageAI | | yes | |
+| TogetherAI, ElevenLabs, PlayHT, Rime, HumeAI, NeetsAI, _Gemini, HuggingFace | | | Provider-specific client APIs / hub helpers (see `Sources/<Name>`) |
+
+Full layering detail: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. Docs index: **[docs/README.md](docs/README.md)**.
 
 # Dependencies
 
@@ -220,11 +246,23 @@ Transitive pins (see [`Package.resolved`](Package.resolved)) include **SwiftAPI*
 
 ### SPM products you can link
 
-| Product | Use when |
-|---------|----------|
-| `AI` | You want the umbrella import and bundled providers |
-| `OpenAI`, `Anthropic`, … | You want a single vendor SDK |
-| `_Gemini`, `Perplexity`, `PlayHT`, `Rime`, `TogetherAI`, `VoyageAI`, `HumeAI`, `NeetsAI` | Standalone products not fully folded into the umbrella re-export surface |
+Exact product names from `Package.swift`:
+
+| Product | Targets exposed | Use when |
+|---------|-----------------|----------|
+| `AI` | CoreMI, LargeLanguageModels, Anthropic, Cohere, ElevenLabs, Groq, HuggingFace, Jina, Mistral, Ollama, OpenAI, AI | Default multi-provider app dependency |
+| `OpenAI` | OpenAI | OpenAI-only |
+| `Anthropic` | Anthropic | Anthropic-only |
+| `Perplexity` | Perplexity | Perplexity (pulls OpenAI transitively) |
+| `TogetherAI` | TogetherAI | Together AI |
+| `VoyageAI` | VoyageAI | Voyage embeddings |
+| `PlayHT` | PlayHT | PlayHT voice |
+| `Rime` | Rime | Rime voice |
+| `HumeAI` | HumeAI | Hume |
+| `NeetsAI` | NeetsAI | Neets |
+| `_Gemini` | _Gemini | Google Gemini client |
+
+There is **no** standalone SPM product today for `CoreMI`, `LargeLanguageModels`, `Cohere`, `Groq`, `HuggingFace`, `Jina`, `Mistral`, `Ollama`, or `ElevenLabs` — consume them via the `AI` product (or add a product in `Package.swift` if you need a leaner slice).
 
 # Usage
 
@@ -707,7 +745,8 @@ return embeddings.data.first?.embedding.description
 
 | Document | Contents |
 |----------|----------|
-| **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** | Full architecture, products vs targets, Mermaid graph, test layout |
+| **[docs/README.md](docs/README.md)** | Documentation index |
+| **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** | Full architecture, products vs targets, Mermaid graph, protocol matrix, tests |
 | **[CONTRIBUTING.md](CONTRIBUTING.md)** | Dev setup, coding guidelines, how to add a provider |
 | **[CHANGELOG.md](CHANGELOG.md)** | Release notes and unreleased changes |
 | **[LICENSE](LICENSE)** | MIT License text |
@@ -756,7 +795,9 @@ Status reflects modules present in this repository (`Sources/` + `Package.swift`
 ### Project hygiene
 
 - [x] Architecture & dependency documentation
-- [x] Contributing guide & changelog
+- [x] Contributing guide, docs index, PR template & changelog
+- [ ] Register missing test targets (Ollama, Rime, TogetherAI folder)
+- [ ] visionOS badge artwork under `Images/`
 - [ ] Tagged semantic releases with automated changelog sections
 
 # Contributing

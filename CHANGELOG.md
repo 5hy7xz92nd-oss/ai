@@ -12,17 +12,22 @@ The package is currently in **alpha**; APIs may change between releases.
 ### Added
 
 - Architecture documentation (`docs/ARCHITECTURE.md`) with a component dependency graph derived from `Package.swift`
-- Contributing guide (`CONTRIBUTING.md`)
+- Documentation index (`docs/README.md`)
+- Contributing guide (`CONTRIBUTING.md`) and GitHub pull request template
 - This changelog
-- README sections for architecture overview, dependencies, documentation links, and an updated module roadmap
+- README sections for architecture overview, dependencies, protocol capability matrix, documentation links, and an updated module roadmap
 
 ### Changed
 
 - README table of contents expanded to include Architecture, Dependencies, Documentation, Contributing, and Changelog
+- Clarified **AI product vs AI module** re-exports (`import AI` exports CoreMI, LargeLanguageModels, OpenAI only)
+- Documented SPM product list exactly as in `Package.swift` and noted targets without standalone products
+- Documented test-target gaps (Ollama, Rime, TogetherAI registration, CoreMI)
+- Fixed stray `</div>` markup and platform notes (including visionOS) in the README
 
 ## [0.0.1] - 2024-01-01
 
-Initial public alpha of the **AI** Swift package (Preternatural AI):
+Baseline snapshot of the public **alpha** tree (date is a documentation anchor, not a git tag guarantee):
 
 - Core layers: `CoreMI`, `LargeLanguageModels`
 - Umbrella product `AI` and standalone provider libraries

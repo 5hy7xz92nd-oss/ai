@@ -105,12 +105,41 @@ Each provider lives under `Sources/<Name>` and typically exposes a `Client` that
 | **_Gemini** | Google Gemini (content, files, embeddings, tools) | CoreMI, CorePersistence, LLM stack |
 | **HuggingFace** | Hub download / tokenizer resources | **CoreMI, Swallow only** (no LargeLanguageModels) |
 
-### AI (umbrella)
+### AI (umbrella module vs product)
 
 **Path:** `Sources/AI`  
-**Depends on:** CoreMI, LargeLanguageModels, Anthropic, Cohere, ElevenLabs, Groq, HuggingFace, Jina, Mistral, Ollama, OpenAI, Swallow
+**Target depends on:** CoreMI, LargeLanguageModels, Anthropic, Cohere, ElevenLabs, Groq, HuggingFace, Jina, Mistral, Ollama, OpenAI, Swallow
 
-Thin re-export module (`@_exported import …`) so `import AI` pulls in the core stack and several bundled providers. Not every product target is re-exported here (for example `_Gemini`, `Perplexity`, `PlayHT`, `Rime`, `TogetherAI`, `VoyageAI`, `HumeAI`, and `NeetsAI` are separate products).
+Distinguish **module** from **product**:
+
+| Concept | What it does |
+|---------|----------------|
+| **`AI` module** (`Sources/AI/module.swift`) | `@_exported import` of **CoreMI**, **LargeLanguageModels**, **OpenAI**, and **SwallowMacrosClient** only |
+| **`AI` product** (`.library(name: "AI", …)`) | Links the modules listed below so clients may `import` them when depending on the product |
+
+So `import AI` brings OpenAI + shared LLM/CoreMI APIs into scope. Modules such as Anthropic or Groq are available to import when the `AI` product is linked, but they are **not** re-exported by the `AI` module.
+
+## Protocol capability matrix
+
+Explicit conformances found under `Sources/` (not an exhaustive feature matrix for every API surface):
+
+| Target | `LLMRequestHandling` | `TextEmbeddingsRequestHandling` | Other surfaces (illustrative) |
+|--------|:--------------------:|:-------------------------------:|-------------------------------|
+| OpenAI | ✓ (`OpenAI.Client+LLMRequestHandling`) | ✓ | Images, Whisper, speech, assistants |
+| Anthropic | ✓ | | Tools / chat messages |
+| Mistral | ✓ | ✓ | |
+| Groq | ✓ | | |
+| Ollama | ✓ | | Local HTTP API |
+| Perplexity | ✓ | | Uses OpenAI target |
+| Cohere | | ✓ | |
+| Jina | | ✓ | |
+| VoyageAI | | ✓ | |
+| TogetherAI | | | Client + embeddings types (check module) |
+| ElevenLabs / PlayHT / Rime | | | Voice / TTS clients |
+| HumeAI / NeetsAI | | | Provider clients |
+| _Gemini | | | Content, files, embeddings, tools (Gemini-specific) |
+| HuggingFace | | | Hub download / tokenizer resources |
+| LargeLanguageModels | | ✓ (`NLEmbeddingProvider` et al.) | `PromptLiteral`, `AbstractLLM` |
 
 ## Products vs targets
 
@@ -126,10 +155,15 @@ Thin re-export module (`@_exported import …`) so `import AI` pulls in the core
 
 ### Standalone products
 
-These can be linked without the full umbrella:
+Declared as their own `.library` entries (link without the full umbrella product):
 
 - `_Gemini`, `Anthropic`, `HumeAI`, `NeetsAI`, `OpenAI`, `Perplexity`, `PlayHT`, `Rime`, `TogetherAI`, `VoyageAI`
 
+### Targets without a dedicated product
+
+Linked only via the `AI` product (unless you add a new `.library`):
+
+- `CoreMI`, `LargeLanguageModels`, `Cohere`, `ElevenLabs`, `Groq`, `HuggingFace`, `Jina`, `Mistral`, `Ollama`, and the `AI` module itself
 ## Dependency graph (internal)
 
 Derived from `Package.swift` target `dependencies` (external packages collapsed to a single node where helpful).
@@ -233,11 +267,13 @@ flowchart TB
 | CoreMI | — |
 | LargeLanguageModels | CoreMI |
 | HuggingFace | CoreMI |
-| OpenAI | LargeLanguageModels |
-| Anthropic | LargeLanguageModels |
+| OpenAI | LargeLanguageModels *(plus Merge, NetworkKit, Swallow externally)* |
+| Anthropic | LargeLanguageModels *(plus Merge, NetworkKit, Swallow externally)* |
 | Mistral, Groq, Ollama, Cohere, Jina, VoyageAI, TogetherAI, ElevenLabs, PlayHT, Rime, HumeAI, NeetsAI, _Gemini | CoreMI, LargeLanguageModels |
 | Perplexity | CoreMI, LargeLanguageModels, **OpenAI** |
 | AI | CoreMI, LargeLanguageModels, Anthropic, Cohere, ElevenLabs, Groq, HuggingFace, Jina, Mistral, Ollama, OpenAI |
+
+OpenAI and Anthropic do **not** list `CoreMI` in `Package.swift`; they reach CoreMI types transitively through `LargeLanguageModels`.
 
 ## External dependencies
 
@@ -255,23 +291,46 @@ Resolved transitive pins (see `Package.resolved`) include **SwiftAPI**, **swift-
 
 ## Tests
 
-Test targets under `Tests/` generally depend on the `AI` umbrella (plus `Swallow`). `_GeminiTests` also depends on `_Gemini` directly.
+Test targets under `Tests/` generally depend on the `AI` product (plus `Swallow`). `_GeminiTests` also depends on `_Gemini` directly.
 
-| Test target | Path |
-|-------------|------|
+| Test target (`Package.swift`) | Path |
+|-------------------------------|------|
 | LargeLanguageModelsTests | `Tests/LargeLanguageModels` |
-| AnthropicTests, OpenAITests, MistralTests, GroqTests, … | `Tests/<Provider>` |
+| AnthropicTests | `Tests/Anthropic` |
+| OpenAITests | `Tests/OpenAI` |
+| MistralTests | `Tests/Mistral` |
+| GroqTests | `Tests/Groq` |
+| PerplexityTests | `Tests/Perplexity` |
+| ElevenLabsTests | `Tests/ElevenLabs` |
+| PlayHTTests | `Tests/PlayHT` |
+| JinaTests | `Tests/Jina` |
+| VoyageAITests | `Tests/VoyageAI` |
+| CohereTests | `Tests/Cohere` |
+| HuggingFaceTests | `Tests/HuggingFace` |
+| NeetsAITests | `Tests/NeetsAI` |
+| HumeAITests | `Tests/HumeAI` |
 | _GeminiTests | `Tests/_Gemini` |
+
+### Gaps (as of this doc)
+
+| Area | Observation |
+|------|-------------|
+| **Ollama** | Source target exists; **no** `OllamaTests` test target |
+| **Rime** | Source target exists; **no** `RimeTests` test target |
+| **TogetherAI** | `Tests/TogetherAI/` directory exists, but **no** matching `.testTarget` in `Package.swift` |
+| **CoreMI** | No dedicated `CoreMITests` target |
 
 ## Design notes
 
 1. **Protocol-oriented providers** — App code can depend on `any LLMRequestHandling` and swap OpenAI, Anthropic, Groq, etc. without rewriting call sites.
-2. **Umbrella vs lean imports** — Use `import AI` for convenience, or link a standalone product (e.g. `OpenAI` only) to reduce surface area.
-3. **NetworkKit API specs** — Most providers define an `*.APISpecification` and map responses into `AbstractLLM` types.
-4. **Experimental Swift features** — `AccessLevelOnImport` is enabled on most targets; keep import access consistent when adding files.
+2. **Product vs module** — Depending on the `AI` **product** links many modules; `import AI` only re-exports CoreMI, LargeLanguageModels, and OpenAI. Import other modules explicitly.
+3. **Lean linking** — Prefer a standalone product (e.g. `OpenAI`) when you do not need the multi-provider product surface.
+4. **NetworkKit API specs** — Most providers define an `*.APISpecification` and map responses into `AbstractLLM` types.
+5. **Experimental Swift features** — `AccessLevelOnImport` is enabled on most targets; keep import access consistent when adding files.
 
 ## Related docs
 
+- [docs/README.md](README.md) — documentation index
 - [README](../README.md) — installation and usage
 - [CONTRIBUTING](../CONTRIBUTING.md) — how to extend the package
 - [CHANGELOG](../CHANGELOG.md) — release history
