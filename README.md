@@ -42,8 +42,18 @@
 
 The definitive, open-source Swift framework for interfacing with generative AI.
 
-[Installation](#installation)\
-[Usage](#usage) 
+[Installation](#installation) ·
+[Architecture](#architecture) ·
+[Dependencies](#dependencies) ·
+[Usage](#usage) ·
+[Documentation](#documentation) ·
+[Roadmap](#roadmap) ·
+[Contributing](#contributing) ·
+[Changelog](#changelog) ·
+[Acknowledgements](#acknowledgements) ·
+[License](#license)
+
+### Usage guide
 
 * [Import the framework](#import-the-framework)
 * [Initialize an AI Client](#initialize-an-ai-client)
@@ -58,11 +68,16 @@ The definitive, open-source Swift framework for interfacing with generative AI.
   * [Audio Transcription: Whisper](#audio-transcription-whisper)
   * [Audio Generation: OpenAI](#audio-generation-openai)
   * [Audio Generation: ElevenLabs](#audio-generation-elevenlabs)
-* [Text Embeddings](#text-embeddings) 
+* [Text Embeddings](#text-embeddings)
 
-[Roadmap](#roadmap) \
-[Acknowledgements](#acknowledgements) \
-[License](#license)
+### Docs & community
+
+| Resource | Description |
+|----------|-------------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, products, and full dependency graph |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, PR process, adding providers |
+| [CHANGELOG.md](CHANGELOG.md) | Notable changes by release |
+| [LICENSE](LICENSE) | MIT |
 
 # Installation
 
@@ -73,6 +88,143 @@ The definitive, open-source Swift framework for interfacing with generative AI.
 3. In the search bar, enter [this URL](https://github.com/PreternaturalAI/AI.git).
 4. Choose the version you'd like to install.
 5. Click `Add Package`.
+
+Or add the dependency in `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/PreternaturalAI/AI.git", branch: "main")
+]
+```
+
+Then link the `AI` product (umbrella) or a standalone product such as `OpenAI`, `Anthropic`, or `Perplexity` (see [Architecture](#architecture)).
+
+# Architecture
+
+The package is organized in layers. Provider SDKs implement shared protocols (`LLMRequestHandling`, embeddings, TTS, and so on) defined in the core modules.
+
+| Layer | Modules | Responsibility |
+|-------|---------|----------------|
+| Umbrella | `AI` | Re-exports core + commonly used providers (`import AI`) |
+| Providers | `OpenAI`, `Anthropic`, `Mistral`, `Groq`, `Ollama`, `Perplexity`, `Cohere`, `Jina`, `VoyageAI`, `TogetherAI`, `ElevenLabs`, `PlayHT`, `Rime`, `HumeAI`, `NeetsAI`, `_Gemini`, `HuggingFace`, … | API clients and model types |
+| LLM abstractions | `LargeLanguageModels` | `AbstractLLM`, `PromptLiteral`, chat/function-calling, embeddings protocols |
+| Foundations | `CoreMI` | Request handling, model identifiers, service credentials, ASR/TTS bases |
+| External | Swallow, Merge, NetworkKit, CorePersistence, SwiftUIX | Shared infrastructure (see [Dependencies](#dependencies)) |
+
+### Component dependency graph
+
+Graph of **package targets** as declared in [`Package.swift`](Package.swift) (external packages shown once at the bottom). For products, tests, and design notes, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+
+```mermaid
+flowchart TB
+  subgraph umbrella [Umbrella]
+    AI
+  end
+
+  subgraph providers [Provider targets]
+    OpenAI
+    Anthropic
+    Mistral
+    Groq
+    Ollama
+    Perplexity
+    Cohere
+    Jina
+    VoyageAI
+    TogetherAI
+    ElevenLabs
+    PlayHT
+    Rime
+    HumeAI
+    NeetsAI
+    Gemini["_Gemini"]
+    HuggingFace
+  end
+
+  subgraph core [Core targets]
+    LargeLanguageModels
+    CoreMI
+  end
+
+  subgraph external [External packages]
+    Swallow
+    Merge
+    NetworkKit
+    CorePersistence
+    SwiftUIX
+  end
+
+  AI --> CoreMI
+  AI --> LargeLanguageModels
+  AI --> OpenAI
+  AI --> Anthropic
+  AI --> Mistral
+  AI --> Groq
+  AI --> Ollama
+  AI --> Cohere
+  AI --> ElevenLabs
+  AI --> HuggingFace
+  AI --> Jina
+
+  OpenAI --> LargeLanguageModels
+  Anthropic --> LargeLanguageModels
+  Mistral --> LargeLanguageModels
+  Groq --> LargeLanguageModels
+  Ollama --> LargeLanguageModels
+  Perplexity --> LargeLanguageModels
+  Perplexity --> OpenAI
+  Cohere --> LargeLanguageModels
+  Jina --> LargeLanguageModels
+  VoyageAI --> LargeLanguageModels
+  TogetherAI --> LargeLanguageModels
+  ElevenLabs --> LargeLanguageModels
+  PlayHT --> LargeLanguageModels
+  Rime --> LargeLanguageModels
+  HumeAI --> LargeLanguageModels
+  NeetsAI --> LargeLanguageModels
+  Gemini --> LargeLanguageModels
+  HuggingFace --> CoreMI
+
+  LargeLanguageModels --> CoreMI
+  LargeLanguageModels --> CorePersistence
+  LargeLanguageModels --> Merge
+  LargeLanguageModels --> NetworkKit
+  LargeLanguageModels --> Swallow
+  LargeLanguageModels --> SwiftUIX
+
+  CoreMI --> CorePersistence
+  CoreMI --> Merge
+  CoreMI --> Swallow
+```
+
+**Notes**
+
+- Most providers also depend on `CoreMI`, `CorePersistence`, `Merge`, `NetworkKit`, and `Swallow` directly (edges omitted above for readability where they already flow through `LargeLanguageModels`).
+- **Perplexity** is the only provider that depends on another provider target (`OpenAI`).
+- **HuggingFace** depends on `CoreMI` + `Swallow` only (hub/tokenizer helpers, not the full LLM stack).
+- The `AI` umbrella product does **not** include every target (for example `_Gemini`, `Perplexity`, and several voice/embeddings products are separate libraries).
+
+# Dependencies
+
+### External Swift packages
+
+| Package | Repository | Role |
+|---------|------------|------|
+| Swallow | [vmanot/Swallow](https://github.com/vmanot/Swallow) | Extensions, macros client, diagnostics |
+| Merge | [vmanot/Merge](https://github.com/vmanot/Merge) | Concurrency / async utilities |
+| NetworkKit | [vmanot/NetworkKit](https://github.com/vmanot/NetworkKit) | HTTP client & API specifications |
+| CorePersistence | [vmanot/CorePersistence](https://github.com/vmanot/CorePersistence) | Persistence & schema helpers (e.g. JSONSchema) |
+| SwiftUIX | [SwiftUIX/SwiftUIX](https://github.com/SwiftUIX/SwiftUIX) | SwiftUI extensions |
+
+Transitive pins (see [`Package.resolved`](Package.resolved)) include **SwiftAPI**, **swift-collections**, and **swift-syntax**.
+
+### SPM products you can link
+
+| Product | Use when |
+|---------|----------|
+| `AI` | You want the umbrella import and bundled providers |
+| `OpenAI`, `Anthropic`, … | You want a single vendor SDK |
+| `_Gemini`, `Perplexity`, `PlayHT`, `Rime`, `TogetherAI`, `VoyageAI`, `HumeAI`, `NeetsAI` | Standalone products not fully folded into the umbrella re-export surface |
 
 # Usage
 
@@ -551,14 +703,73 @@ let embeddings = try await LLMManager.client.textEmbeddings(
 return embeddings.data.first?.embedding.description
 ```
 
+# Documentation
+
+| Document | Contents |
+|----------|----------|
+| **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** | Full architecture, products vs targets, Mermaid graph, test layout |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Dev setup, coding guidelines, how to add a provider |
+| **[CHANGELOG.md](CHANGELOG.md)** | Release notes and unreleased changes |
+| **[LICENSE](LICENSE)** | MIT License text |
+
+API behavior is illustrated in the [Usage](#usage) sections above; protocol details live in `Sources/LargeLanguageModels` and `Sources/CoreMI`.
+
 # Roadmap
 
-- [x] OpenAI
+Status reflects modules present in this repository (`Sources/` + `Package.swift`). Checked items ship as package targets; depth of feature coverage varies by provider.
+
+### Core
+
+- [x] `CoreMI` — request handling, model identifiers, services, ASR/TTS foundations
+- [x] `LargeLanguageModels` — `AbstractLLM`, prompts, function calling, embeddings protocols
+- [x] `AI` umbrella product
+
+### LLM & multimodal providers
+
+- [x] OpenAI (chat, vision, tools, images, Whisper, speech)
 - [x] Anthropic
 - [x] Mistral
+- [x] Groq
 - [x] Ollama
-- [ ] Perplexity
-- [ ] Groq
+- [x] Perplexity
+- [x] TogetherAI
+- [x] `_Gemini` (Google Gemini client; standalone product)
+- [ ] Broader parity matrix (streaming, tools, vision) across every LLM provider
+
+### Embeddings & hub
+
+- [x] OpenAI embeddings
+- [x] Cohere
+- [x] Jina
+- [x] VoyageAI
+- [x] Hugging Face hub helpers / tokenizer resources
+
+### Voice & speech
+
+- [x] ElevenLabs
+- [x] PlayHT
+- [x] Rime
+- [x] HumeAI
+- [x] NeetsAI
+- [x] OpenAI TTS / Whisper
+
+### Project hygiene
+
+- [x] Architecture & dependency documentation
+- [x] Contributing guide & changelog
+- [ ] Tagged semantic releases with automated changelog sections
+
+# Contributing
+
+Contributions are welcome. Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
+
+- Environment and build requirements
+- PR expectations and testing notes
+- Steps to add or extend a provider without breaking layering rules
+
+# Changelog
+
+See **[CHANGELOG.md](CHANGELOG.md)** for user-visible changes. The package is in **alpha**; expect API evolution between releases.
 
 # Acknowledgements
 
@@ -567,4 +778,4 @@ return embeddings.data.first?.embedding.description
 
 # License
 
-This package is licensed under the MIT License.
+This package is licensed under the [MIT License](LICENSE).
