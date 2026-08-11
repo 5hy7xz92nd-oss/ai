@@ -20,7 +20,7 @@ The package is currently in **alpha**; APIs may change between releases.
 
 - README table of contents expanded to include Architecture, Dependencies, Documentation, Contributing, and Changelog
 
-## [0.0.1] - Alpha
+## [0.0.1] - 2024-01-01
 
 Initial public alpha of the **AI** Swift package (Preternatural AI):
 
