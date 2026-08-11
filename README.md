@@ -83,7 +83,7 @@ This package is organized as a Swift Package Manager workspace with layered modu
 
 ### Component Dependency Graph
 
-The following graph is derived from `/home/runner/work/ai/ai/Package.swift` target dependencies:
+The following graph is derived from `Package.swift` target dependencies:
 
 ```mermaid
 graph TD
@@ -148,7 +148,7 @@ graph TD
 
 ## Dependencies
 
-External package dependencies declared in `/home/runner/work/ai/ai/Package.swift`:
+External package dependencies declared in `Package.swift`:
 
 - [`CorePersistence`](https://github.com/vmanot/CorePersistence)
 - [`Merge`](https://github.com/vmanot/Merge)

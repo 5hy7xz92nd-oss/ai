@@ -1,6 +1,6 @@
 # Architecture
 
-This document summarizes the package architecture as defined in `/home/runner/work/ai/ai/Package.swift`.
+This document summarizes the package architecture as defined in `Package.swift`.
 
 ## Module Layers
 
