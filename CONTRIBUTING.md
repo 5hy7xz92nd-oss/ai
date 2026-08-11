@@ -127,6 +127,7 @@ Prefer implementing shared protocols over one-off APIs so apps can swap provider
 | [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) | PR checklist |
 
 When editing architecture docs, regenerate or manually update the Mermaid graph so it stays consistent with `Package.swift`.
+
 ## CI
 
 Pushes and PRs to `main` run the **Build** workflow (Preternatural build action on macOS runners). Fix build failures before merge.
