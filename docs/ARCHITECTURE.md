@@ -15,6 +15,8 @@ This document summarizes the package architecture as defined in `Package.swift`.
 
 ## Component Dependency Graph
 
+In this graph, `CorePersistence`, `Merge`, `NetworkKit`, `Swallow`, and `SwiftUIX` are external package dependencies (not targets in this repository).
+
 ```mermaid
 graph TD
     CoreMI --> CorePersistence
@@ -85,6 +87,8 @@ graph TD
     AI -. standalone product .-> _Gemini
 ```
 > Note: The `AI` umbrella target currently depends on `CoreMI`, `LargeLanguageModels`, `Anthropic`, `Cohere`, `ElevenLabs`, `Groq`, `HuggingFace`, `Jina`, `Mistral`, `Ollama`, and `OpenAI`. Other provider modules in this repository are distributed as standalone products and are not re-exported by `AI` in `Package.swift`.
+
+> Note: `HuggingFace` intentionally differs from most provider modules: in `Package.swift` it depends on `CoreMI` and `Swallow`, and does not depend on `LargeLanguageModels`.
 
 ## External Dependencies
 
