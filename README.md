@@ -1,42 +1,43 @@
 > [!IMPORTANT]
 > This package is presently in its alpha stage of development (2026-03-04).
 
----
-
-</div>
-
 #### Supported Platforms
+
+SPM platforms from [`Package.swift`](Package.swift): **iOS 16+**, **macOS 13+**, **tvOS 16+**, **visionOS 1+**, **watchOS 9+**.
+
 <p align="left">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/macos.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/macos-active.svg">
-  <img alt="macos" src="Images/macos-active.svg" height="24">
+  <img alt="macOS" src="Images/macos-active.svg" height="24">
 </picture>&nbsp;
   
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/ios.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/ios-active.svg">
-  <img alt="macos" src="Images/ios-active.svg" height="24">
+  <img alt="iOS" src="Images/ios-active.svg" height="24">
 </picture>&nbsp;
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/ipados.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/ipados-active.svg">
-  <img alt="macos" src="Images/ipados-active.svg" height="24">
+  <img alt="iPadOS" src="Images/ipados-active.svg" height="24">
 </picture>&nbsp;
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/tvos.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/tvos-active.svg">
-  <img alt="macos" src="Images/tvos-active.svg" height="24">
+  <img alt="tvOS" src="Images/tvos-active.svg" height="24">
 </picture>&nbsp;
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="Images/watchos.svg">
   <source media="(prefers-color-scheme: light)" srcset="Images/watchos-active.svg">
-  <img alt="macos" src="Images/watchos-active.svg" height="24">
+  <img alt="watchOS" src="Images/watchos-active.svg" height="24">
 </picture>
 </p>
+
+Also targets **visionOS** (badge art not yet in `Images/`).
 
 # AI
 
@@ -104,6 +105,179 @@ External package dependencies declared in `Package.swift`:
 3. In the search bar, enter [this URL](https://github.com/PreternaturalAI/AI.git).
 4. Choose the version you'd like to install.
 5. Click `Add Package`.
+
+Or add the dependency in `Package.swift`:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/PreternaturalAI/AI.git", branch: "main")
+]
+```
+
+Then link the `AI` product (umbrella) or a standalone product such as `OpenAI`, `Anthropic`, or `Perplexity` (see [Architecture](#architecture)).
+
+# Architecture
+
+The package is organized in layers. Provider SDKs implement shared protocols (`LLMRequestHandling`, embeddings, TTS, and so on) defined in the core modules.
+
+| Layer | Modules | Responsibility |
+|-------|---------|----------------|
+| Umbrella module | `AI` | `@_exported` re-exports **CoreMI**, **LargeLanguageModels**, **OpenAI** (and Swallow macros client). Other bundled modules still need their own `import`. |
+| Umbrella product | `AI` library | SPM product that **links** core + Anthropic, Cohere, ElevenLabs, Groq, HuggingFace, Jina, Mistral, Ollama, OpenAI, and the `AI` module |
+| Providers | `OpenAI`, `Anthropic`, `Mistral`, `Groq`, `Ollama`, `Perplexity`, `Cohere`, `Jina`, `VoyageAI`, `TogetherAI`, `ElevenLabs`, `PlayHT`, `Rime`, `HumeAI`, `NeetsAI`, `_Gemini`, `HuggingFace`, … | API clients and model types |
+| LLM abstractions | `LargeLanguageModels` | `AbstractLLM`, `PromptLiteral`, chat/function-calling, embeddings protocols |
+| Foundations | `CoreMI` | Request handling, model identifiers, service credentials, ASR/TTS bases |
+| External | Swallow, Merge, NetworkKit, CorePersistence, SwiftUIX | Shared infrastructure (see [Dependencies](#dependencies)) |
+
+`import AI` is enough for OpenAI + shared LLM types. For other clients linked by the product, add e.g. `import Anthropic` or `import Groq`. Providers shipped only as standalone products (`Perplexity`, `_Gemini`, `VoyageAI`, …) require linking that product.
+
+### Component dependency graph
+
+Graph of **package targets** as declared in [`Package.swift`](Package.swift) (external packages shown once at the bottom). For products, tests, and design notes, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
+
+```mermaid
+flowchart TB
+  subgraph umbrella [Umbrella]
+    AI
+  end
+
+  subgraph providers [Provider targets]
+    OpenAI
+    Anthropic
+    Mistral
+    Groq
+    Ollama
+    Perplexity
+    Cohere
+    Jina
+    VoyageAI
+    TogetherAI
+    ElevenLabs
+    PlayHT
+    Rime
+    HumeAI
+    NeetsAI
+    Gemini["_Gemini"]
+    HuggingFace
+  end
+
+  subgraph core [Core targets]
+    LargeLanguageModels
+    CoreMI
+  end
+
+  subgraph external [External packages]
+    Swallow
+    Merge
+    NetworkKit
+    CorePersistence
+    SwiftUIX
+  end
+
+  AI --> CoreMI
+  AI --> LargeLanguageModels
+  AI --> OpenAI
+  AI --> Anthropic
+  AI --> Mistral
+  AI --> Groq
+  AI --> Ollama
+  AI --> Cohere
+  AI --> ElevenLabs
+  AI --> HuggingFace
+  AI --> Jina
+
+  OpenAI --> LargeLanguageModels
+  Anthropic --> LargeLanguageModels
+  Mistral --> LargeLanguageModels
+  Groq --> LargeLanguageModels
+  Ollama --> LargeLanguageModels
+  Perplexity --> LargeLanguageModels
+  Perplexity --> OpenAI
+  Cohere --> LargeLanguageModels
+  Jina --> LargeLanguageModels
+  VoyageAI --> LargeLanguageModels
+  TogetherAI --> LargeLanguageModels
+  ElevenLabs --> LargeLanguageModels
+  PlayHT --> LargeLanguageModels
+  Rime --> LargeLanguageModels
+  HumeAI --> LargeLanguageModels
+  NeetsAI --> LargeLanguageModels
+  Gemini --> LargeLanguageModels
+  HuggingFace --> CoreMI
+
+  LargeLanguageModels --> CoreMI
+  LargeLanguageModels --> CorePersistence
+  LargeLanguageModels --> Merge
+  LargeLanguageModels --> NetworkKit
+  LargeLanguageModels --> Swallow
+  LargeLanguageModels --> SwiftUIX
+
+  CoreMI --> CorePersistence
+  CoreMI --> Merge
+  CoreMI --> Swallow
+```
+
+**Notes**
+
+- Most providers also depend on `CoreMI`, `CorePersistence`, `Merge`, `NetworkKit`, and `Swallow` directly (edges omitted above for readability where they already flow through `LargeLanguageModels`).
+- **OpenAI** and **Anthropic** depend on `LargeLanguageModels` + networking stack, not on `CoreMI` directly in `Package.swift`.
+- **Perplexity** is the only provider that depends on another provider target (`OpenAI`).
+- **HuggingFace** depends on `CoreMI` + `Swallow` only (hub/tokenizer helpers, not the full LLM stack).
+- The `AI` **product** does **not** link every target (for example `_Gemini`, `Perplexity`, `PlayHT`, `Rime`, `TogetherAI`, `VoyageAI`, `HumeAI`, `NeetsAI` are separate products).
+- The `AI` **module** re-exports only CoreMI, LargeLanguageModels, and OpenAI among first-party modules (`Sources/AI/module.swift`).
+
+### Protocol capabilities (from source)
+
+Which shared protocols have an explicit client conformance today:
+
+| Target | `LLMRequestHandling` | `TextEmbeddingsRequestHandling` | Notes |
+|--------|:--------------------:|:-------------------------------:|-------|
+| OpenAI | yes | yes | Also images, Whisper, speech, assistants |
+| Anthropic | yes | | |
+| Mistral | yes | yes | |
+| Groq | yes | | |
+| Ollama | yes | | |
+| Perplexity | yes | | Depends on OpenAI target |
+| Cohere | | yes | |
+| Jina | | yes | |
+| VoyageAI | | yes | |
+| TogetherAI, ElevenLabs, PlayHT, Rime, HumeAI, NeetsAI, _Gemini, HuggingFace | | | Provider-specific client APIs / hub helpers (see `Sources/<Name>`) |
+
+Full layering detail: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**. Docs index: **[docs/README.md](docs/README.md)**.
+
+# Dependencies
+
+### External Swift packages
+
+| Package | Repository | Role |
+|---------|------------|------|
+| Swallow | [vmanot/Swallow](https://github.com/vmanot/Swallow) | Extensions, macros client, diagnostics |
+| Merge | [vmanot/Merge](https://github.com/vmanot/Merge) | Concurrency / async utilities |
+| NetworkKit | [vmanot/NetworkKit](https://github.com/vmanot/NetworkKit) | HTTP client & API specifications |
+| CorePersistence | [vmanot/CorePersistence](https://github.com/vmanot/CorePersistence) | Persistence & schema helpers (e.g. JSONSchema) |
+| SwiftUIX | [SwiftUIX/SwiftUIX](https://github.com/SwiftUIX/SwiftUIX) | SwiftUI extensions |
+
+Transitive pins (see [`Package.resolved`](Package.resolved)) include **SwiftAPI**, **swift-collections**, and **swift-syntax**.
+
+### SPM products you can link
+
+Exact product names from `Package.swift`:
+
+| Product | Targets exposed | Use when |
+|---------|-----------------|----------|
+| `AI` | CoreMI, LargeLanguageModels, Anthropic, Cohere, ElevenLabs, Groq, HuggingFace, Jina, Mistral, Ollama, OpenAI, AI | Default multi-provider app dependency |
+| `OpenAI` | OpenAI | OpenAI-only |
+| `Anthropic` | Anthropic | Anthropic-only |
+| `Perplexity` | Perplexity | Perplexity (pulls OpenAI transitively) |
+| `TogetherAI` | TogetherAI | Together AI |
+| `VoyageAI` | VoyageAI | Voyage embeddings |
+| `PlayHT` | PlayHT | PlayHT voice |
+| `Rime` | Rime | Rime voice |
+| `HumeAI` | HumeAI | Hume |
+| `NeetsAI` | NeetsAI | Neets |
+| `_Gemini` | _Gemini | Google Gemini client |
+
+There is **no** standalone SPM product today for `CoreMI`, `LargeLanguageModels`, `Cohere`, `Groq`, `HuggingFace`, `Jina`, `Mistral`, `Ollama`, or `ElevenLabs` — consume them via the `AI` product (or add a product in `Package.swift` if you need a leaner slice).
 
 # Usage
 
@@ -582,14 +756,76 @@ let embeddings = try await LLMManager.client.textEmbeddings(
 return embeddings.data.first?.embedding.description
 ```
 
+# Documentation
+
+| Document | Contents |
+|----------|----------|
+| **[docs/README.md](docs/README.md)** | Documentation index |
+| **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** | Full architecture, products vs targets, Mermaid graph, protocol matrix, tests |
+| **[CONTRIBUTING.md](CONTRIBUTING.md)** | Dev setup, coding guidelines, how to add a provider |
+| **[CHANGELOG.md](CHANGELOG.md)** | Release notes and unreleased changes |
+| **[LICENSE](LICENSE)** | MIT License text |
+
+API behavior is illustrated in the [Usage](#usage) sections above; protocol details live in `Sources/LargeLanguageModels` and `Sources/CoreMI`.
+
 # Roadmap
 
-- [x] OpenAI
+Status reflects modules present in this repository (`Sources/` + `Package.swift`). Checked items ship as package targets; depth of feature coverage varies by provider.
+
+### Core
+
+- [x] `CoreMI` — request handling, model identifiers, services, ASR/TTS foundations
+- [x] `LargeLanguageModels` — `AbstractLLM`, prompts, function calling, embeddings protocols
+- [x] `AI` umbrella product
+
+### LLM & multimodal providers
+
+- [x] OpenAI (chat, vision, tools, images, Whisper, speech)
 - [x] Anthropic
 - [x] Mistral
+- [x] Groq
 - [x] Ollama
-- [ ] Perplexity
-- [ ] Groq
+- [x] Perplexity
+- [x] TogetherAI
+- [x] `_Gemini` (Google Gemini client; standalone product)
+- [ ] Broader parity matrix (streaming, tools, vision) across every LLM provider
+
+### Embeddings & hub
+
+- [x] OpenAI embeddings
+- [x] Cohere
+- [x] Jina
+- [x] VoyageAI
+- [x] Hugging Face hub helpers / tokenizer resources
+
+### Voice & speech
+
+- [x] ElevenLabs
+- [x] PlayHT
+- [x] Rime
+- [x] HumeAI
+- [x] NeetsAI
+- [x] OpenAI TTS / Whisper
+
+### Project hygiene
+
+- [x] Architecture & dependency documentation
+- [x] Contributing guide, docs index, PR template & changelog
+- [ ] Register missing test targets (Ollama, Rime, TogetherAI folder)
+- [ ] visionOS badge artwork under `Images/`
+- [ ] Tagged semantic releases with automated changelog sections
+
+# Contributing
+
+Contributions are welcome. Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
+
+- Environment and build requirements
+- PR expectations and testing notes
+- Steps to add or extend a provider without breaking layering rules
+
+# Changelog
+
+See **[CHANGELOG.md](CHANGELOG.md)** for user-visible changes. The package is in **alpha**; expect API evolution between releases.
 
 # Acknowledgements
 
@@ -598,4 +834,4 @@ return embeddings.data.first?.embedding.description
 
 # License
 
-This package is licensed under the MIT License.
+This package is licensed under the [MIT License](LICENSE).
