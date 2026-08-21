@@ -22,30 +22,6 @@ Tests/                 parallel test targets (see ARCHITECTURE.md for gaps)
 docs/                  long-form documentation (this folder)
 ```
 
-## Repository research plan
-
-1. Baseline architecture from `Package.swift` and `docs/ARCHITECTURE.md` (targets, product boundaries, and layer rules).
-2. Validate provider consistency by sampling one provider per modality (chat, embeddings, speech) and comparing request handling patterns.
-3. Audit test coverage by target under `Tests/` and identify missing behavior checks for provider-specific features.
-4. Review integration risk points: shared protocol changes in `LargeLanguageModels`, dependency changes in `CoreMI`, and provider-to-provider coupling.
-5. Prioritize a short backlog: architecture parity tasks, test gaps, and docs updates tied to each accepted change.
-
-## Agent/workflow roles
-
-- **Scope agent**: confirms target module(s), expected behavior, and acceptance criteria before edits.
-- **Architecture agent**: enforces layering (`providers → LargeLanguageModels → CoreMI`) and checks product/target dependency impact.
-- **Implementation agent**: makes focused changes in one area, following existing patterns and minimizing cross-target churn.
-- **Validation agent**: runs required verification (`swift test` when behavior changes) and checks for regressions/security/secrets.
-- **Release agent**: updates `README.md`, `docs/ARCHITECTURE.md`, and `CHANGELOG.md` when public behavior or package structure changes.
-
-Recommended workflow sequence:
-
-1. Scope agent drafts change intent and acceptance criteria.
-2. Architecture agent approves dependency/layer impact.
-3. Implementation agent applies a minimal, focused patch.
-4. Validation agent verifies behavior and safety.
-5. Release agent finalizes documentation/changelog completeness.
-
 ## Keeping docs honest
 
 When you change `Package.swift` or add a provider:
