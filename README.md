@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> This package is presently in its alpha stage of development (2026-03-04).
+> 🕴️ This package is presently in its alpha stage of development (2026-03-04).
 
 #### Supported Platforms
 
